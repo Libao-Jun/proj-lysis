@@ -42,13 +42,19 @@ export const FRONTEND_PRESET = [
 
 // ─── 内部：收集文件 ────────────────────────────────────────────────────────
 
-interface FileEntry { filePath: string; size: number }
+interface FileEntry { filePath: string; size: number; relativePath: string }
+
+/** 最大递归深度，防止符号链接循环导致的无限递归 */
+const MAX_DEPTH = 32;
 
 function collectFiles(
   dir: string,
   excludeItems: string[],
   excludeExts: string[],
+  rootDir: string,
+  depth = 0,
 ): FileEntry[] {
+  if (depth > MAX_DEPTH) return [];
   const result: FileEntry[] = [];
   const entries = safeReaddir(dir);
   if (entries.length === 0) return result;
@@ -61,15 +67,24 @@ function collectFiles(
     if (!stat) continue;
 
     if (stat.isDirectory()) {
-      result.push(...collectFiles(fullPath, excludeItems, excludeExts));
+      result.push(...collectFiles(fullPath, excludeItems, excludeExts, rootDir, depth + 1));
     } else if (stat.isFile()) {
       const ext = getFileExt(fullPath);
       if (ext && !isBinaryExt(ext, excludeExts)) {
-        result.push({ filePath: fullPath, size: stat.size });
+        result.push({
+          filePath: fullPath,
+          size: stat.size,
+          relativePath: path.relative(rootDir, fullPath),
+        });
       }
     }
   }
   return result;
+}
+
+/** 转义 Markdown 表格中的特殊字符，防止表格布局被破坏 */
+function sanitizeMdTable(text: string): string {
+  return text.replace(/\|/g, "\\|");
 }
 
 // ─── 内部：格式化 ──────────────────────────────────────────────────────────
@@ -143,7 +158,8 @@ function buildReportMarkdown(
   md += `${sep} ${headers.join(` ${sep} `)} ${sep}\n`;
   md += `${sep}${headers.map(() => "------").join(sep)}${sep}\n`;
   for (const [ext, s] of Object.entries(sorted)) {
-    md += `${sep} .${ext} ${sep} ${s.files} ${sep} ${formatBytes(s.bytes)} ${sep} `;
+    const safeExt = sanitizeMdTable(ext);
+    md += `${sep} .${safeExt} ${sep} ${s.files} ${sep} ${formatBytes(s.bytes)} ${sep} `;
     md += `${s.totalLines} ${sep} ${s.codeLines} ${sep} ${s.commentLines} ${sep} ${s.blankLines} ${sep} `;
     md += `${s.filePercentage} ${sep} ${s.codePercentage} ${sep} ${s.sizePercentage} ${sep}\n`;
   }
@@ -152,7 +168,7 @@ function buildReportMarkdown(
   return md;
 }
 
-/** 文件体积统计报告（size-*.md）—— 含单个文件明细 */
+/** 文件体积统计报告（size-*.md）—— 含单个文件明细（使用相对路径） */
 function buildSizeMarkdown(
   sorted: AnalysisResult,
   byExt: Map<string, FileEntry[]>,
@@ -163,38 +179,32 @@ function buildSizeMarkdown(
   const now = new Date().toISOString();
   const sep = "|";
 
-  // 标题
   const title = isZh
     ? "# 📊 proj-lysis 文件体积统计"
     : "# 📊 proj-lysis File Size Statistics";
   const genTime = isZh ? `生成时间：${now}` : `Generated: ${now}`;
-  const note = isZh
-    ? "> 包含每个文件的体积及同类文件的聚合统计"
-    : "> Per-file sizes and per-extension aggregate statistics";
 
-  // 汇总表头
   const summaryTitle = isZh ? "## 同类文件体积汇总" : "## Size Summary by Type";
   const summaryLabels = isZh
     ? ["文件类型", "文件数", "总体积", "平均体积", "体积占比"]
     : ["File Type", "Files", "Total Size", "Avg Size", "Size %"];
 
-  // 明细表头
   const detailTitle = isZh ? "## 单个文件体积明细" : "## Per-File Size Details";
 
-  let md = `${title}\n\n${genTime}\n\n${note}\n\n${summaryTitle}\n\n`;
+  let md = `${title}\n\n${genTime}\n\n${summaryTitle}\n\n`;
   md += `${sep} ${summaryLabels.join(` ${sep} `)} ${sep}\n`;
   md += `${sep}${summaryLabels.map(() => "------").join(sep)}${sep}\n`;
 
-  // 按扩展名排序，与 sorted 一致
   for (const [ext] of Object.entries(sorted)) {
     const entries = byExt.get(ext) ?? [];
     const s = sorted[ext]!;
     const avg = entries.length > 0 ? s.bytes / entries.length : 0;
-    md += `${sep} .${ext} ${sep} ${s.files} ${sep} ${formatBytes(s.bytes)} ${sep} `;
+    const safeExt = sanitizeMdTable(ext);
+    md += `${sep} .${safeExt} ${sep} ${s.files} ${sep} ${formatBytes(s.bytes)} ${sep} `;
     md += `${formatBytes(Math.round(avg))} ${sep} ${s.sizePercentage} ${sep}\n`;
   }
 
-  // ── 单个文件明细 ──
+  // ── 单个文件明细（使用相对路径保护隐私）──
   md += `\n${detailTitle}\n\n`;
 
   for (const [ext] of Object.entries(sorted)) {
@@ -203,19 +213,20 @@ function buildSizeMarkdown(
 
     if (entries.length === 0) continue;
 
+    const safeExt = sanitizeMdTable(ext);
     const extTitle = isZh
-      ? `### .${ext}（${s.files} 个文件, ${formatBytes(s.bytes)}）`
-      : `### .${ext} (${s.files} files, ${formatBytes(s.bytes)})`;
+      ? `### .${safeExt}（${s.files} 个文件, ${formatBytes(s.bytes)}）`
+      : `### .${safeExt} (${s.files} files, ${formatBytes(s.bytes)})`;
     md += `${extTitle}\n\n`;
 
     const fileHeaders = isZh ? ["文件路径", "体积"] : ["File Path", "Size"];
     md += `${sep} ${fileHeaders.join(` ${sep} `)} ${sep}\n`;
     md += `${sep}------${sep}------${sep}\n`;
 
-    // 按体积降序排列
     const sortedEntries = [...entries].sort((a, b) => b.size - a.size);
     for (const entry of sortedEntries) {
-      md += `${sep} ${entry.filePath} ${sep} ${formatBytes(entry.size)} ${sep}\n`;
+      const safePath = sanitizeMdTable(entry.relativePath);
+      md += `${sep} ${safePath} ${sep} ${formatBytes(entry.size)} ${sep}\n`;
     }
     md += "\n";
   }
@@ -270,8 +281,20 @@ export function analyze(options: AnalyzeOptions): AnalysisResult {
     excludeItems.push(...collectGitignore(resolved, resolved));
   }
 
+  // ─── 验证输出路径，禁止写入到分析目录之外 ────────────────────
+  const resolvedDir = path.resolve(directory);
+
+  if (outputPath) {
+    const resolvedOutput = path.resolve(outputPath);
+    if (!resolvedOutput.startsWith(resolvedDir + path.sep) && resolvedOutput !== resolvedDir) {
+      throw new Error(
+        `输出路径 "${outputPath}" 不在分析目录 "${resolvedDir}" 内，拒绝写入。`,
+      );
+    }
+  }
+
   // ─── 收集文件 ─────────────────────────────────────────────────
-  const entries = collectFiles(path.resolve(directory), excludeItems, excludeExtensions);
+  const entries = collectFiles(resolvedDir, excludeItems, excludeExtensions, resolvedDir);
   const stats: AnalysisResult = {};
   const byExt = new Map<string, FileEntry[]>(); // 按扩展名分组（供体积报告用）
 
@@ -325,7 +348,7 @@ export function analyze(options: AnalyzeOptions): AnalysisResult {
 
   // ─── 写文件 ──────────────────────────────────────────────────
   if (Object.keys(sorted).length > 0) {
-    const outDir = path.resolve(directory, "proj-lysis");
+    const outDir = path.join(resolvedDir, "proj-lysis");
     const summary: Summary = { totalFiles, totalBytes, totalLines: totalAll, totalCode, totalComment, totalBlank };
 
     // 代码统计

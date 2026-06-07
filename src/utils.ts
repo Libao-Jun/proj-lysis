@@ -81,8 +81,15 @@ export function safeStat(p: string): fs.Stats | null {
   try { return fs.statSync(p); } catch { return null; }
 }
 
-export function safeReadFile(p: string): string {
-  try { return fs.readFileSync(p, "utf8"); } catch { return ""; }
+/** 单文件最大读取体积：10 MB，超过则跳过 */
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+
+export function safeReadFile(p: string, maxBytes = MAX_FILE_BYTES): string {
+  try {
+    const stat = fs.statSync(p);
+    if (stat.size > maxBytes) return "";
+    return fs.readFileSync(p, "utf8");
+  } catch { return ""; }
 }
 
 // ─── 行数统计（含注释检测）─────────────────────────────────────────────

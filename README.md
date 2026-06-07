@@ -177,11 +177,15 @@ analyze({
 pnpm install    # 安装依赖
 pnpm dev        # 开发运行
 pnpm build      # 构建（生成 .js + .d.ts）
-pnpm test       # 运行测试（27 项）
+pnpm test       # 运行测试（31 项）
 pnpm typecheck  # 类型检查
 ```
 
 技术栈：**TypeScript** + **rolldown** + **pnpm** + **Node.js 原生测试**
+
+## 📝 更新日志
+
+参见 [CHANGELOG.md](./CHANGELOG.md)
 
 ## 📄 License
 
