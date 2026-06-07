@@ -14,10 +14,11 @@
   "module": "./dist/proj-lysis.mjs",
   "types": "./dist/index.d.ts",
   "bin": {
-    "proj-lysis": "./dist/cli.mjs"
+    "proj-lysis": "./bin/proj-lysis.mjs"
   },
   "files": [
-    "dist"
+    "dist",
+    "bin"
   ],
   "scripts": {
     "dev": "tsx src/cli.ts",

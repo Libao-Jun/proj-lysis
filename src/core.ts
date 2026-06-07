@@ -38,6 +38,7 @@ export const FRONTEND_PRESET = [
   ".gitignore", ".npmrc", ".env",
   "docker",
   "__pycache__",
+  ".agents",".claude"
 ];
 
 // ─── 内部：收集文件 ────────────────────────────────────────────────────────

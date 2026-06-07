@@ -72,6 +72,39 @@ const result = analyze({
 // result.ts = { files: 5, bytes: 27350, totalLines: 750, codeLines: 509, ... }
 ```
 
+### Vite 插件集成
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite';
+
+function projLysisPlugin() {
+  return {
+    name: 'proj-lysis',
+    apply: 'build' as const,
+    async buildStart() {
+      const { analyze } = await import('proj-lysis');
+      analyze({
+        directory: '.',             // 分析整个项目，报告输出到 ./proj-lysis/
+        sortField: 'codeLines',
+        sortOrder: 'desc',
+      });
+    },
+  };
+}
+
+export default defineConfig({
+  plugins: [projLysisPlugin()],
+});
+```
+
+> 💡 **`directory` 与输出目录的关系**：分析结果始终写入 `{directory}/proj-lysis/`。
+>
+> | `directory` | 分析范围 | 输出目录 |
+> |-------------|----------|----------|
+> | `"."` | 整个项目（推荐） | `./proj-lysis/` ← 项目根目录 |
+> | `"./src"` | 仅 src 目录 | `./src/proj-lysis/` ← src 子目录 |
+
 ## 📋 分析结果
 
 运行后，在**被分析目录**下生成 `proj-lysis/` 文件夹：
@@ -134,7 +167,7 @@ your-project/
 
 前端项目中常见的不参与统计的目录/文件，默认值如下：
 
-`node_modules`, `.git`, `.svn`, `dist`, `build`, `.next`, `.nuxt`, `.output`, `out`, `public`, `static`, `assets`, `coverage`, `.nyc_output`, `.vscode`, `.idea`, `.DS_Store`, `Thumbs.db`, `.cache`, `.temp`, `tmp`, `.lock`, `.gitignore`, `.npmrc`, `.env`, `docker`, `__pycache__`
+`node_modules`, `.git`, `.svn`, `dist`, `build`, `.next`, `.nuxt`, `.output`, `out`, `public`, `static`, `assets`, `coverage`, `.nyc_output`, `.vscode`, `.idea`, `.DS_Store`, `Thumbs.db`, `.cache`, `.temp`, `tmp`, `.lock`, `.gitignore`, `.npmrc`, `.env`, `docker`, `__pycache__`,`.agents`,`.claude`
 
 - 传入自定义数组 → 完全覆盖默认预设
 - 传入 `[]` → 不使用任何预设
@@ -170,6 +203,18 @@ analyze({
 ### 默认跳过的文件类型
 
 图片、字体、音视频、压缩包、二进制文件等约 40 种类型始终被跳过。可通过 `excludeExtensions` 追加。
+
+### Windows 含中文路径注意事项
+
+若项目路径含非 ASCII 字符（如中文），`npx proj-lysis` 可能因 pnpm 生成的 `.cmd` 文件编码问题而失败。使用以下方式替代：
+
+```bash
+# 方式一：直接调用 node（推荐）
+node ./node_modules/proj-lysis/dist/cli.mjs --dir .
+
+# 方式二：通过 bin 启动器
+node ./node_modules/proj-lysis/bin/proj-lysis.mjs --dir .
+```
 
 ## 🔧 开发
 
