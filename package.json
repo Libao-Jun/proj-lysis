@@ -1,0 +1,62 @@
+{
+  "name": "proj-lysis",
+  "version": "2.0.0",
+  "description": "零依赖的基于 Node.js 的代码统计分析工具 —— 按文件类型统计文件数、体积、代码行/注释行/空白行及占比，生成中英双语 Markdown 报告，支持 CLI 与编程调用",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/proj-lysis.mjs",
+      "require": "./dist/proj-lysis.cjs"
+    }
+  },
+  "main": "./dist/proj-lysis.cjs",
+  "module": "./dist/proj-lysis.mjs",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "proj-lysis": "./dist/cli.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsx src/cli.ts",
+    "clean": "rimraf dist",
+    "build": "rimraf dist && tsc --emitDeclarationOnly --outDir dist && rolldown -c rolldown.config.ts",
+    "build:js": "rolldown -c rolldown.config.ts",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts",
+    "prepublishOnly": "pnpm run build"
+  },
+  "keywords": [
+    "code-analysis",
+    "code-statistics",
+    "line-count",
+    "code-metrics",
+    "code-size",
+    "file-size",
+    "markdown-report",
+    "bilingual",
+    "zero-dependency",
+    "cli",
+    "tool",
+    "typescript"
+  ],
+  "author": "newborn_calf",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/username/proj-lysis.git"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "rimraf": "^6.1.3",
+    "rolldown": "^1.0.0-beta.1",
+    "tsx": "^4.22.4",
+    "typescript": "^5.8.0"
+  }
+}

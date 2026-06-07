@@ -1,0 +1,17 @@
+# 依赖
+node_modules/
+
+# 构建产物
+dist/
+
+*.log
+.DS_Store
+proj-lysis
+analyzer.json
+test-output.json
+
+# TypeScript 构建缓存
+*.tsbuildinfo
+
+.claude
+.npmrc
