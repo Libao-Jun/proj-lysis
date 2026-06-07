@@ -38,7 +38,8 @@ export const FRONTEND_PRESET = [
   ".gitignore", ".npmrc", ".env",
   "docker",
   "__pycache__",
-  ".agents",".claude"
+  ".agents",".claude",
+  "proj-lysis", // 排除上一次项目分析生成的结果目录 /proj-lysis
 ];
 
 // ─── 内部：收集文件 ────────────────────────────────────────────────────────
