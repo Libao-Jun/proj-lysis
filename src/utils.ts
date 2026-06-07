@@ -134,7 +134,7 @@ export function countLines(content: string, ext: string): FileLineStats {
 /** 判断路径是否匹配排除列表（子串匹配） */
 export function isExcluded(filePath: string, items: string[]): boolean {
   const p = filePath.replace(/\\/g, "/");
-  return items.some((item) => p.includes(item));
+  return items.some((item) => p.includes(item.replace(/\\/g, "/")));
 }
 
 // ─── 排序 ──────────────────────────────────────────────────────────────
