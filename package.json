@@ -1,6 +1,6 @@
 {
   "name": "proj-lysis",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "零依赖的基于 Node.js 的代码统计分析工具 —— 按文件类型统计文件数、体积、代码行/注释行/空白行及占比，生成中英双语 Markdown 报告，支持 CLI 与编程调用",
   "type": "module",
   "exports": {
@@ -50,7 +50,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/username/proj-lysis.git"
+    "url": "https://github.com/Libao-Jun/proj-lysis.git"
+  },
+  "homepage": "https://github.com/Libao-Jun/proj-lysis#readme",
+  "bugs": {
+    "url": "https://github.com/Libao-Jun/proj-lysis/issues"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
