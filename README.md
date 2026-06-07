@@ -167,7 +167,7 @@ your-project/
 
 前端项目中常见的不参与统计的目录/文件，默认值如下：
 
-`node_modules`, `.git`, `.svn`, `dist`, `build`, `.next`, `.nuxt`, `.output`, `out`, `public`, `static`, `assets`, `coverage`, `.nyc_output`, `.vscode`, `.idea`, `.DS_Store`, `Thumbs.db`, `.cache`, `.temp`, `tmp`, `.lock`, `.gitignore`, `.npmrc`, `.env`, `docker`, `__pycache__`,`.agents`,`.claude`
+`node_modules`, `.git`, `.svn`, `dist`, `build`, `.next`, `.nuxt`, `.output`, `out`, `public`, `static`, `assets`, `coverage`, `.nyc_output`, `.vscode`, `.idea`, `.DS_Store`, `Thumbs.db`, `.cache`, `.temp`, `tmp`, `.lock`, `.gitignore`, `.npmrc`, `.env`, `docker`, `__pycache__`,`.agents`,`.claude`, `proj-lysis`
 
 - 传入自定义数组 → 完全覆盖默认预设
 - 传入 `[]` → 不使用任何预设
